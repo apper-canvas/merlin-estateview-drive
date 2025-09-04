@@ -1,16 +1,21 @@
 import { motion } from "framer-motion";
-import Card from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
-import ApperIcon from "@/components/ApperIcon";
-import ImageGallery from "@/components/molecules/ImageGallery";
-import { formatPrice, formatNumber, formatDate } from "@/utils/formatters";
 import { useSavedProperties } from "@/hooks/useSavedProperties";
 import { toast } from "react-toastify";
+import React, { useState } from "react";
+import { formatDate, formatNumber, formatPrice } from "@/utils/formatters";
+import ApperIcon from "@/components/ApperIcon";
+import ImageGallery from "@/components/molecules/ImageGallery";
+import Select from "@/components/atoms/Select";
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
 
 const PropertyDetails = ({ property }) => {
   const { isSaved, saveProperty, unsaveProperty } = useSavedProperties();
   const saved = isSaved(property.Id);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
 
   const handleSaveToggle = () => {
     if (saved) {
@@ -38,8 +43,54 @@ const handleContact = () => {
     toast.success("Opening email client...");
   };
 
-  const handleScheduleTour = () => {
-    toast.info("Tour scheduling feature would be implemented here");
+const handleScheduleTour = () => {
+    setShowScheduleModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowScheduleModal(false);
+    setSelectedDate("");
+    setSelectedTime("");
+  };
+
+  const handleSubmitTour = () => {
+    if (!selectedDate || !selectedTime) {
+      toast.error("Please select both date and time");
+      return;
+    }
+
+    // Validate date is not in the past
+    const selectedDateTime = new Date(selectedDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDateTime < today) {
+      toast.error("Please select a future date");
+      return;
+    }
+
+    // Simulate scheduling (in real app, this would call an API)
+    const tourData = {
+      propertyId: property.Id,
+      propertyTitle: property.title,
+      date: selectedDate,
+      time: selectedTime,
+      scheduledAt: new Date().toISOString()
+    };
+    
+    // Store in localStorage for demo purposes
+    const existingTours = JSON.parse(localStorage.getItem('scheduledTours') || '[]');
+    existingTours.push(tourData);
+    localStorage.setItem('scheduledTours', JSON.stringify(existingTours));
+
+    toast.success(`Tour scheduled for ${new Date(selectedDate).toLocaleDateString()} at ${selectedTime}`);
+    handleCloseModal();
+  };
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      handleCloseModal();
+    }
   };
 
   const details = [
@@ -192,9 +243,101 @@ const handleContact = () => {
                 Send Message
               </Button>
             </div>
-          </Card>
+</Card>
         </div>
       </div>
+
+      {/* Schedule Tour Modal */}
+      {showScheduleModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={handleBackdropClick}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-xl shadow-elevation max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-display font-semibold text-neutral-900">
+                  Schedule Tour
+                </h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleCloseModal}
+                  className="p-2 h-8 w-8"
+                >
+                  <ApperIcon name="X" className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-neutral-600 text-sm mb-4">
+                  Schedule a tour for <strong>{property.title}</strong>
+                </p>
+
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Preferred Date
+                  </label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} // Tomorrow
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Preferred Time
+                  </label>
+                  <select
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">Select a time</option>
+                    <option value="9:00 AM">9:00 AM</option>
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="11:00 AM">11:00 AM</option>
+                    <option value="12:00 PM">12:00 PM</option>
+                    <option value="1:00 PM">1:00 PM</option>
+                    <option value="2:00 PM">2:00 PM</option>
+                    <option value="3:00 PM">3:00 PM</option>
+                    <option value="4:00 PM">4:00 PM</option>
+                    <option value="5:00 PM">5:00 PM</option>
+                    <option value="6:00 PM">6:00 PM</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    onClick={handleCloseModal}
+                    variant="secondary"
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmitTour}
+                    variant="primary"
+                    className="flex-1 gap-2"
+                  >
+                    <ApperIcon name="Calendar" className="h-4 w-4" />
+                    Schedule Tour
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 };
