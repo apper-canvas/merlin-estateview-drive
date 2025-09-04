@@ -22,8 +22,20 @@ const PropertyDetails = ({ property }) => {
     }
   };
 
-  const handleContact = () => {
-    toast.info("Contact feature would be implemented here");
+const handleContact = () => {
+    // Simulate phone call initiation
+    const agentPhone = property?.agent?.phone || "555-0123";
+    window.location.href = `tel:${agentPhone}`;
+    toast.success("Initiating call to agent...");
+  };
+
+  const handleMessage = () => {
+    // Open email client for messaging
+    const agentEmail = property?.agent?.email || "agent@example.com";
+    const subject = `Inquiry about ${property?.title || 'Property'}`;
+    const body = `Hi, I'm interested in learning more about this property: ${property?.title || 'Property'}. Please contact me at your earliest convenience.`;
+    window.location.href = `mailto:${agentEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    toast.success("Opening email client...");
   };
 
   const handleScheduleTour = () => {
@@ -175,7 +187,7 @@ const PropertyDetails = ({ property }) => {
                 <ApperIcon name="Phone" className="h-4 w-4" />
                 Call Now
               </Button>
-              <Button onClick={handleContact} variant="secondary" className="w-full gap-2">
+<Button onClick={handleMessage} variant="secondary" className="w-full gap-2">
                 <ApperIcon name="Mail" className="h-4 w-4" />
                 Send Message
               </Button>
